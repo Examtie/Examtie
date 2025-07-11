@@ -8,6 +8,8 @@ git clone https://github.com/Examtie/Examtie.git
 cd Examtie
 docker compose up -d 
 ```
+Then visit the website at http://localhost:5000
+
 This will run:
 - `ghcr.io/examtie/backend`
 - `ghcr.io/examtie/frontend`

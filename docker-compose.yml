@@ -9,8 +9,8 @@ services:
       - MINIO_ROOT_PASSWORD=minioadmin
     command: server /data --console-address ":9001"
     ports:
-      - "9766:9766"
-      - "9001:9001"
+      - "9766:9000"
+      - "9767:9001"
     volumes:
       - minio_data:/data
 
@@ -37,7 +37,7 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=examtie
     ports:
-      - "27017:27017"
+      - "27717:27017"
 
   redis:
     image: redis:7
@@ -47,7 +47,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "63790:6379"
 
 
   backend:
@@ -87,7 +87,7 @@ services:
     environment:
       - API_URL=http://backend:9765
     ports:
-      - "3000:3000"
+      - "3300:3000"
 
   caddy:
     image: caddy:2
