@@ -1,0 +1,114 @@
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set local http://minio:9000 minioadmin minioadmin;
+      mc mb -p local/examtie || true;
+      mc anonymous set download local/examtie;
+      exit 0;
+      "
+
+
+  mongodb:
+    image: mongo:6
+    container_name: mongodb
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=examtie
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+
+
+  backend:
+    build:
+      context: ./Backend
+    image: examtie/backend:dev
+    container_name: backend
+    depends_on:
+      - mongodb
+      - redis
+
+    restart: unless-stopped
+    environment:
+      # Database & cache
+      - MONGO_URI=mongodb://mongodb:27017/examtie
+      - REDIS_URL=redis://redis:6379/0
+      # Object storage (MinIO S3 compatible by default; override for R2 in production)
+      - STORAGE_DRIVER=s3
+      - STORAGE_BUCKET=examtie
+      - STORAGE_REGION=us-east-1
+      - S3_ENDPOINT=http://minio:9000
+      - S3_ACCESS_KEY=minioadmin
+      - S3_SECRET_KEY=minioadmin
+      - R2_ENDPOINT_URL=http://minio:9000
+      - R2_ACCESS_KEY=minioadmin
+      - R2_SECRET_KEY=minioadmin
+      - R2_BUCKET_NAME=examtie
+      - R2_REGION=us-east-1
+      - PUBLIC_STORAGE_URL=/storage
+    ports:
+      - "9765:9765"
+
+  frontend:
+    build:
+      context: ./Frontend
+      args:
+        - API_BASE_URL=/api
+    image: examtie/frontend:dev
+    container_name: frontend
+    depends_on:
+      - backend
+    restart: unless-stopped
+    environment:
+      - API_URL=http://backend:9765
+    ports:
+      - "3000:3000"
+
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
+volumes:
+  mongo_data:
+  redis_data:
+  minio_data:
+
