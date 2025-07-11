@@ -51,9 +51,7 @@ services:
 
 
   backend:
-    build:
-      context: ./Backend
-    image: examtie/backend:dev
+    image: ghcr.io/examtie/backend:latest
     container_name: backend
     depends_on:
       - mongodb
@@ -81,11 +79,7 @@ services:
       - "9765:9765"
 
   frontend:
-    build:
-      context: ./Frontend
-      args:
-        - API_BASE_URL=/api
-    image: examtie/frontend:dev
+    image: ghcr.io/examtie/frontend:latest
     container_name: frontend
     depends_on:
       - backend
