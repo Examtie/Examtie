@@ -51,7 +51,7 @@ services:
 
 
   backend:
-    image: ghcr.io/examtie/public-backend:latest
+    image: ghcr.io/examtie/examtie-backend:latest
     container_name: backend
     depends_on:
       - mongodb
@@ -79,7 +79,7 @@ services:
       - "9765:9765"
 
   frontend:
-    image: ghcr.io/examtie/public-frontend:latest
+    image: ghcr.io/examtie/examtie-frontend:latest
     container_name: frontend
     depends_on:
       - backend
