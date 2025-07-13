@@ -108,7 +108,7 @@ services:
           handle /docs* {
             reverse_proxy backend:9765
           }
-                        handle_path /storage/* {
+          handle_path /storage/* {
             reverse_proxy minio:9766
           }
           handle {
