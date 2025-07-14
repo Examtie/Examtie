@@ -1,0 +1,128 @@
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --address ":9766" --console-address ":9767"
+    ports:
+      - "9766:9766"
+      - "9767:9767"
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set local http://minio:9766 minioadmin minioadmin;
+      mc mb -p local/examtie || true;
+      mc anonymous set download local/examtie;
+      exit 0;
+      "
+
+
+  mongodb:
+    image: mongo:6
+    container_name: mongodb
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=examtie
+    ports:
+      - "27717:27017"
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "63790:6379"
+
+
+  backend:
+    image: ghcr.io/examtie/examtie-backend:latest
+    container_name: backend
+    depends_on:
+      - mongodb
+      - redis
+
+    restart: unless-stopped
+    environment:
+      # Database & cache
+      - MONGO_URI=mongodb://mongodb:27017/examtie
+      - REDIS_URL=redis://redis:6379/0
+      # Object storage (MinIO S3 compatible by default; override for R2 in production)
+      - STORAGE_DRIVER=s3
+      - STORAGE_BUCKET=examtie
+      - STORAGE_REGION=us-east-1
+      - S3_ENDPOINT=http://minio:9766
+      - S3_ACCESS_KEY=minioadmin
+      - S3_SECRET_KEY=minioadmin
+      #- R2_ENDPOINT_URL=http://minio:9000
+      #- R2_ACCESS_KEY=minioadmin
+      #- R2_SECRET_KEY=minioadmin
+      #- R2_BUCKET_NAME=examtie
+
+      - PUBLIC_STORAGE_URL=/storage
+    ports:
+      - "9765:9765"
+
+  frontend:
+    image: ghcr.io/examtie/examtie-frontend:latest
+    container_name: frontend
+    depends_on:
+      - backend
+    restart: unless-stopped
+    environment:
+      - API_URL=http://backend:9765
+    ports:
+      - "3300:3000"
+
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    environment:
+      CADDYFILE: |
+        :5000 {
+          handle_path /api/* {
+            reverse_proxy backend:9765
+          }
+          handle /openapi.json {
+            reverse_proxy backend:9765
+          }
+          handle /docs* {
+            reverse_proxy backend:9765
+          }
+          handle_path /storage/* {
+            reverse_proxy minio:9766
+          }
+          handle {
+            reverse_proxy frontend:3000
+          }
+          handle /auth/* {
+            reverse_proxy backend:9765
+          }
+        }
+    command: /bin/sh -c 'echo "$${CADDYFILE}" > /etc/caddy/Caddyfile && caddy run --config /etc/caddy/Caddyfile --adapter caddyfile'
+    ports:
+      - "5000:5000"
+
+volumes:
+  mongo_data:
+  redis_data:
+  minio_data:
