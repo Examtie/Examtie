@@ -19,7 +19,6 @@ chmod +x installer.sh
 ```
 ## Run (Linux)
 ```bash
-git clone https://github.com/Examtie/Examtie.git
 cd Examtie
 cd Linux
 docker compose up -d
