@@ -10,11 +10,26 @@ docker start container_name
 net start winnat
 ```
 [Refrence](https://stackoverflow.com/questions/65272764/ports-are-not-available-listen-tcp-0-0-0-0-50070-bind-an-attempt-was-made-to)
-## Run
+## Install (Linux) (Auto install Docker and everything needed)
 ```bash
 git clone https://github.com/Examtie/Examtie.git
 cd Examtie
-docker compose up -d 
+cd Linux
+chmod +x installer.sh
+```
+## Run (Linux)
+```bash
+git clone https://github.com/Examtie/Examtie.git
+cd Examtie
+cd Linux
+docker compose up -d
+```
+## Run (Windows)
+```bash
+git clone https://github.com/Examtie/Examtie.git
+cd Examtie
+cd windows
+start.bat
 ```
 Then visit the website at http://localhost:5000
 
