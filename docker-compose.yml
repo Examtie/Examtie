@@ -79,7 +79,7 @@ services:
       - "9765:9765"
 
   frontend:
-    image: ghcr.io/examtie/examtie-frontend:latest
+    image: ghcr.io/examtie/frontend:latest
     container_name: frontend
     depends_on:
       - backend
