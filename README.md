@@ -12,7 +12,7 @@ Then visit the website at http://localhost:5000
 
 This will run:
 - `ghcr.io/examtie/examtie-backend`
-- `ghcr.io/examtie/examtie-frontend`
+- `ghcr.io/examtie/frontend`
 - `mongodb` - database
 - `caddy` - reverse proxy
 - `redis` - for sessions
